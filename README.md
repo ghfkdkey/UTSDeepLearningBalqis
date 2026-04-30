@@ -1,150 +1,158 @@
-# 🧠 UTS Machine Learning — Deep Learning vs Classical ML
+# 🧠 UTS Pengantar Deep Learning
+### Perbandingan Deep Learning vs Machine Learning Konvensional pada Tiga Kasus
 
-> Balqis Eka Nurfadisyah | 1202220223 | SI46EDM
-
+> **Balqis Eka Nurfadisyah — 1202220223**  
+> Program Studi S1 Sistem Informasi, Fakultas Rekayasa Industri  
+> Universitas Telkom · SI-46-EDM · 2026
 
 ---
 
 ## 📋 Deskripsi Proyek
 
-Proyek ini membandingkan pendekatan **Deep Learning** dengan **Classical Machine Learning** pada tiga tipe data yang berbeda: tabular, image, dan text. Tujuan utama bukan sekadar mencapai akurasi tertinggi, melainkan menunjukkan kemampuan analisis dalam memilih, membandingkan, dan menjustifikasi pendekatan yang digunakan.
+Studi empiris yang membandingkan performa **Deep Learning** vs **Machine Learning Konvensional** pada tiga jenis data berbeda menggunakan dataset dari platform Kaggle. Tujuan utama bukan sekadar mengejar skor tertinggi, melainkan memahami **pada kondisi apa deep learning unggul** dan kapan metode klasik masih lebih efektif.
+
+Seluruh eksperimen menggunakan:
+- `random_state = 42` (konsisten di semua model)
+- Split train-validation **80:20** dengan stratifikasi label
+- Pembagian split yang **identik** antara metode konvensional dan deep learning
 
 ---
 
-## 🗂️ Struktur Repository
+## 📁 Struktur Repository
 
 ```
-├── kasus1_titanic.ipynb          # Tabular — Binary Classification
-├── kasus2_digit_recognizer.ipynb # Image — Multi-class Classification
-├── kasus3_disaster_tweets.ipynb  # Text — NLP Binary Classification
-├── laporan_uts.pdf               # Laporan lengkap (PDF)
+├── UTS_titanic.ipynb            # Kasus 1: Tabular Binary Classification
+├── UTS_digit_recognizer.ipynb   # Kasus 2: Image Multi-Class Classification
+├── UTS_nlp.ipynb                # Kasus 3: Text Binary Classification
+├── titanic_ensemble_submission.csv
+├── mnist_cnn_submission.csv
+├── nlp_bilstm_submission.csv
 └── README.md
 ```
 
 ---
 
-## 📊 Ringkasan Tiga Kasus
+## 🗂️ Ringkasan Tiga Kasus
 
-### Kasus 1 — Titanic (Tabular Data)
-**Dataset:** Kaggle Titanic · ~891 baris · Binary classification (Survived 0/1)
+### Kasus 1 — Titanic: Tabular Binary Classification
 
-| Model | Val Accuracy | F1-Score |
-|---|---|---|
-| Random Forest (default) | 83.24% | 0.7727 |
-| Random Forest (GridSearch) | 81.56% | 0.7402 |
-| XGBoost (default) | 81.01% | 0.7536 |
-| XGBoost (GridSearch) | 82.12% | 0.7681 |
-| MLP (threshold 0.35) | 82.12% | 0.7778 |
-| TabNet (threshold 0.55) | 83.80% | 0.7852 |
-| FT-Transformer (threshold 0.30) | 82.68% | 0.7891 |
-| **Ensemble RF+XGB+MLP** | **83.80%** | **0.7943** |
+**Dataset:** 891 baris train, 8 fitur setelah preprocessing (Age, Sex, Pclass, Fare, Title, FamilySize, IsAlone, Embarked)
 
-**Kaggle Score:** `0.76315`
+**Feature Engineering:** Ekstraksi Title dari Name, FamilySize, IsAlone, binning Age & Fare, imputasi berbasis grup
 
-**Insight utama:** Pada dataset kecil (~900 baris), MLP adalah pilihan DL paling justified — FT-Transformer hanya unggul 3 sampel dari 179, namun membutuhkan 26K parameter vs MLP yang hanya 929 parameter. RF Default mengalahkan RF GridSearch, membuktikan bahwa *extensive tuning tidak selalu bermanfaat di dataset kecil*.
+| Model | Val Accuracy | Val F1 | Train Time |
+|---|---|---|---|
+| Random Forest (Default) | 83.24% | 0.7727 | ~1 detik |
+| Random Forest (GridSearch) | 81.56% | 0.7402 | ~52.9 detik |
+| XGBoost (Default) | 81.01% | 0.7536 | ~1 detik |
+| XGBoost (GridSearch) | 82.12% | 0.7681 | ~6.7 detik |
+| **MLP** | 82.12% | 0.7778 | ~5 detik |
+| **TabNet** | 83.80% | 0.7852 | ~32 detik |
+| **FT-Transformer** | 82.68% | 0.7891 | ~17 detik |
+| **Ensemble (RF+XGB+MLP)** | **83.80%** | **0.7943** | — |
+
+> **Kesimpulan:** Deep Learning **TIDAK** mengungguli metode konvensional. Dataset terlalu kecil (~712 baris training). Random Forest default sudah cukup optimal.
 
 ---
 
-### Kasus 2 — Digit Recognizer MNIST (Image Data)
-**Dataset:** Kaggle Digit Recognizer · 42,000 gambar · 28×28 px · 10 kelas
+### Kasus 2 — Digit Recognizer: Image Multi-Class Classification
 
-| Model | Val Accuracy | Macro F1 |
-|---|---|---|
-| PCA (90% variance) + Random Forest | — | — |
-| HOG + SVM (RBF, C=10) | — | — |
-| **CNN + Data Augmentation** | **~98-99%** | **~0.98+** |
+**Dataset:** MNIST — 42.000 train, 28.000 test, citra grayscale 28×28 px, 10 kelas (digit 0–9)
 
-**Teknik yang digunakan:**
-- **Classical:** PCA reduksi 784 → N dimensi (90% variance), HOG dengan `pixels_per_cell=(7,7)`, `cells_per_block=(2,2)`
-- **Deep Learning:** CNN 2-layer Conv → MaxPool → FC → Dropout(0.25)
-- **Data Augmentation:** RandomRotation(10°) + RandomAffine(translate=0.1)
+**Preprocessing DL:** Reshape ke (28,28), augmentasi RandomRotation(10°) + RandomAffine(translate 0.1), normalisasi mean=0.5 std=0.5
+
+| Model | Val Accuracy | Macro F1 | Train Time | Inf. Time |
+|---|---|---|---|---|
+| PCA + Random Forest | 94.71% | 0.9464 | 109.77 s | 0.141 s |
+| HOG + SVM | 96.92% | 0.9691 | 285.62 s | 25.295 s |
+| **CNN (Deep Learning)** | **98.88%** | **0.9887** | 176.81 s | 2.528 s |
 
 **Arsitektur CNN:**
 ```
-Input (1×28×28)
-  → Conv2d(1→16, 3×3) → ReLU → MaxPool(2×2)   [→ 16×14×14]
-  → Conv2d(16→32, 3×3) → ReLU → MaxPool(2×2)  [→ 32×7×7]
-  → Flatten → FC(1568→128) → ReLU → Dropout(0.25)
-  → FC(128→10) [output: 10 kelas]
+Input(1×28×28) → Conv2d(1→16) → ReLU → MaxPool →
+Conv2d(16→32) → ReLU → MaxPool → Flatten →
+Linear(1568→128) → ReLU → Dropout(0.25) → Linear(128→10)
+```
+Total parameter: **206.922**
+
+> **Kesimpulan:** CNN **unggul signifikan** (~2–4 poin akurasi). Data dengan struktur spasial + sampel cukup → Deep Learning jelas lebih baik.
+
+---
+
+### Kasus 3 — NLP Disaster Tweets: Text Binary Classification
+
+**Dataset:** 7.613 baris train, klasifikasi biner: bencana nyata (1) vs bukan (0)
+
+**Augmentasi:** Synonym replacement (WordNet) pada kelas minoritas, split dilakukan *sebelum* augmentasi untuk mencegah data leakage
+
+| Model | Val F1 | Val Accuracy | Train Time | Inf. Time |
+|---|---|---|---|---|
+| Logistic Regression (TF-IDF) | 0.7604 | 79.51% | 0.27 s | 0.0005 s |
+| **Linear SVM (TF-IDF)** | **0.7661** | **80.43%** | 13.76 s | 0.5433 s |
+| BiLSTM (Embedding) | 0.7245 | 77.08% | 9.31 s | 0.0358 s |
+
+**Arsitektur BiLSTM:**
+```
+Input(B, 50) → Embedding(10002, 50) → BiLSTM(hidden=64, bidirectional) →
+Concat hidden state (dim=128) → Dropout(0.5) → Linear(128→1)
+```
+Total parameter: **559.621**
+
+> **Kesimpulan:** BiLSTM **KALAH** dari baseline TF-IDF. Dataset teks kecil dengan kata kunci diskriminatif → metode konvensional tetap lebih kompetitif.
+
+---
+
+## 📊 Ringkasan Lintas Kasus
+
+| Kasus | Tipe Data | Ukuran Train | Konvensional Terbaik | DL Terbaik | Pemenang |
+|---|---|---|---|---|---|
+| Titanic | Tabular (8 fitur) | ~712 | RF 83.24% | TabNet 83.80% | **Setara** |
+| Digit Recognizer | Image 28×28 | 33.600 | HOG+SVM 96.92% | CNN 98.88% | **Deep Learning** |
+| NLP Disaster Tweets | Text (≤31 kata) | ~7.400 | LinearSVM F1=0.7661 | BiLSTM F1=0.7245 | **Konvensional** |
+
+---
+
+## 💡 Kesimpulan Utama
+
+1. **Deep learning bukan jawaban universal.** Pada dataset kecil dan tabular, model berbasis tree masih setara atau lebih baik.
+2. **Ukuran dataset adalah faktor penentu.** DL membutuhkan ribuan–puluhan ribu sampel agar regularisasi internal bekerja efektif.
+3. **Struktur data menentukan arsitektur:** citra 2D → CNN, sekuensial → LSTM/Transformer, tabular heterogen → tree-based.
+4. **Biaya komputasi nyata.** TabNet membutuhkan ~30× waktu lebih lama dari XGBoost default untuk akurasi yang sebanding.
+5. **Ensemble lintas paradigma** (RF + XGB + MLP) bisa melampaui batas individual masing-masing model.
+
+---
+
+## 🔧 Cara Menjalankan
+
+```bash
+# Clone repository
+git clone https://github.com/ghfkdkey/UTSDeepLearningBalqis.git
+cd UTSDeepLearningBalqis
+
+# Install dependencies
+pip install torch scikit-learn xgboost pytorch-tabnet nltk scikit-image pandas matplotlib seaborn
+
+# Jalankan notebook sesuai kasus
+jupyter notebook UTS_titanic.ipynb
+jupyter notebook UTS_digit_recognizer.ipynb
+jupyter notebook UTS_nlp.ipynb
 ```
 
-**Pola misclassification:** HOG+SVM gagal pada digit dengan gaya penulisan tidak konvensional (terutama 9↔8, 3↔2 akibat kemiripan gradien lokal). CNN gagal pada kasus ambiguitas global shape (9→7, 1→2) — namun secara keseluruhan lebih robust.
+**Requirements:** Python 3, PyTorch, scikit-learn, XGBoost, NLTK, scikit-image, pytorch-tabnet  
+**GPU:** Direkomendasikan untuk training CNN dan BiLSTM (CUDA)
 
 ---
 
-### Kasus 3 — NLP Disaster Tweets (Text Data)
-**Dataset:** Kaggle NLP Disaster Tweets · Binary classification (bencana nyata vs tidak)
+## 📚 Referensi Utama
 
-*In progress — hasil akan diupdate setelah submission.*
-
-**Rencana implementasi:**
-- **Classical:** TF-IDF (unigram + bigram) + Logistic Regression / Naive Bayes / Linear SVM
-- **Deep Learning:** Embedding + BiLSTM / DistilBERT fine-tuning
-- **Metrik utama:** F1-Score (metrik resmi kompetisi)
+- Shwartz-Ziv & Armon (2022) — *Tabular Data: Deep Learning is Not All You Need*
+- Arik & Pfister (2021) — *TabNet: Attentive Interpretable Tabular Learning*
+- Gorishniy et al. (2021) — *Revisiting Deep Learning Models for Tabular Data*
+- Dalal & Triggs (2005) — *Histograms of Oriented Gradients for Human Detection*
+- Wei & Zou (2019) — *EDA: Easy Data Augmentation Techniques*
 
 ---
 
-## 🏆 Status Bonus
-
-| Bonus | Status | Keterangan |
-|---|---|---|
-| Submit Kaggle Kasus 1 (+3) | ✅ | Score: 0.76315 |
-| Submit Kaggle Kasus 2 (+3) | ✅ | MNIST CNN submission |
-| Submit Kaggle Kasus 3 (+3) | 🔄 | In progress |
-| Ensemble ML+DL (+5) | ✅ | RF+XGB+MLP Kasus 1 |
-| Data Augmentation (+3) | ✅ | RandomRotation+Affine Kasus 2 |
-
----
-
-## 🔬 Rubrik Penilaian
-
-| Aspek | Bobot |
-|---|---|
-| Implementasi Metode Konvensional | 15% |
-| Implementasi Deep Learning | 25% |
-| Justifikasi Pemilihan Arsitektur | 15% |
-| Kualitas Analisis Perbandingan | 20% |
-| Kualitas Laporan | 15% |
-| Reproducibility | 10% |
-
----
-
-## ⚙️ Reproducibility
-
-Semua eksperimen menggunakan **random seed = 42** yang dikunci secara konsisten:
-
-```python
-def set_seed(seed=42):
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(seed)
-        torch.backends.cudnn.deterministic = True
-        torch.backends.cudnn.benchmark = False
-```
-
-**Train/Validation split:** 80:20, `stratify=y`, `random_state=42` — konsisten di semua model dalam satu kasus.
-
----
-
-## 🛠️ Dependencies
-
-```
-numpy, pandas, matplotlib, seaborn
-scikit-learn, xgboost
-pytorch, torchvision
-scikit-image (HOG)
-pytorch-tabnet
-transformers (HuggingFace) — Kasus 3
-```
-
-> Dijalankan di **Google Colab / Kaggle Notebook** dengan GPU acceleration.
-
----
-
-## 📌 Catatan Teknis Penting
-
-- **Perbandingan fair:** Data split yang sama digunakan untuk semua model dalam satu kasus
-- **HOG tidak memerlukan normalisasi pixel** — HOG menghitung gradien relatif dan menerapkan L2-normalisasi internal per block, sehingga skala absolut piksel tidak berpengaruh
-- **CNN train accuracy** dievaluasi menggunakan loader *tanpa* augmentasi untuk menghindari underestimation
-- **SVM training accuracy** diestimasi dengan subset 5,000 sampel karena predict RBF kernel di 33K data sangat mahal secara komputasi
+<div align="center">
+  <sub>Laporan UTS Pengantar Deep Learning · Universitas Telkom · 2026</sub>
+</div>

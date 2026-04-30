@@ -1,8 +1,6 @@
 # 🧠 UTS Machine Learning — Deep Learning vs Classical ML
 
-> **Nama:** Balqis Eka Nurfadisyah
-> **NIM:** 1202220223
-> **Mata Kuliah:** Pengantar Deep Learning
+> Balqis Eka Nurfadisyah | 1202220223 | SI46EDM
 
 
 ---

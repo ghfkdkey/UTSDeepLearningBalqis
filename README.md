@@ -1,8 +1,9 @@
 # 🧠 UTS Machine Learning — Deep Learning vs Classical ML
 
-> **Mata Kuliah:** Machine Learning / Pembelajaran Mesin  
-> **Semester:** Genap 2025/2026  
-> **Format:** Take Home 7 Hari  
+> **Nama:** Balqis Eka Nurfadisyah
+> **NIM:** 1202220223
+> **Mata Kuliah:** Pengantar Deep Learning
+
 
 ---
 
